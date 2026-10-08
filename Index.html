@@ -70,7 +70,7 @@ const D=ms=>ms?new Date(ms).toLocaleString('en-GB',{day:'2-digit',month:'short',
 const loc=ms=>new Date(ms-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);
 function age(t){const m=Math.max(0,((t.resolved||t.closed||Date.now())-t.created)/6e4),h=m/60;return h<1?Math.round(m)+' min':h<48?h.toFixed(1)+' h':(h/24).toFixed(1)+' days'}
 function sla(t){if(t.status==='Cancelled')return '—';const due=t.created+CFG.pr[t.priority].res*6e4;if(t.resolved)return t.resolved<=due?'SLA Met':'SLA Breached';const n=Date.now();return n>due?'SLA Breached':(n-t.created)/(due-t.created)>.75?'At Risk':'Within SLA'}
-const sc=s=>s==='SLA Breached'?'bad':s==='At Risk'?'warn':s==='—'||s==='Within SLA'?'':'ok';
+const sc=s=>s==='SLA Breached '?'bad':s==='At Risk'?'warn':s==='—'||s==='Within SLA'?'':'ok';
 function toast(m){const e=$('#toast');e.textContent=m;e.className='show';clearTimeout(tt);tt=setTimeout(()=>e.className='',3500)}
 async function save(t){
  if(db){try{await db.collection('tasks').doc(t.id).set(t)}catch(e){toast('Unable to update the task at this moment. Please try again or contact the system administrator.')}return}
