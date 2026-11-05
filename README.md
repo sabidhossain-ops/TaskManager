@@ -1,7 +1,7 @@
 # Task Management System
 
 A responsive admin dashboard for creating, tracking and updating team tasks.
-It is built with **React + Vite + Tailwind CSS** on **Supabase** (PostgreSQL + Auth), and deployed to **Cloudflare Pages**.
+It is built with **React + Vite + Tailwind CSS** on **Supabase** (PostgreSQL + Auth), and deployed to **Cloudflare Workers** (static assets).
 
 ## Features
 
@@ -97,31 +97,40 @@ git push origin main
 
 `.env*` files (except `.env.example`), `node_modules/` and `dist/` are git-ignored.
 
-## 4. Deploy to Cloudflare Pages
+## 4. Deploy to Cloudflare (Workers static assets)
 
-1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages → Connect to Git** and select this repository.
+The repo includes [`wrangler.jsonc`](wrangler.jsonc), which deploys `dist/` as a Cloudflare Worker with static assets.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository** and select this repository.
 2. Build settings:
 
-   | Setting                | Value           |
-   | ---------------------- | --------------- |
-   | Framework preset       | `React (Vite)`  |
-   | Build command          | `npm run build` |
-   | Build output directory | `dist`          |
-   | Node version           | from `.nvmrc` (22) |
+   | Setting        | Value                |
+   | -------------- | -------------------- |
+   | Build command  | `npm run build`      |
+   | Deploy command | `npx wrangler deploy` |
+   | Root directory | *(empty)*            |
+   | Node version   | from `.nvmrc` (22)   |
 
-3. Under **Settings → Variables and Secrets**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for **Production** and **Preview**.
-4. Save and deploy. Every push to `main` redeploys.
-5. In Supabase, go to **Authentication → URL Configuration** and add your `*.pages.dev` URL, plus any custom domain, to **Site URL / Redirect URLs**.
+   The Worker name in the dashboard must match `"name"` in `wrangler.jsonc` (currently `taskmanager`).
+3. Go to **Settings → Builds → Variables and secrets** and add these as **build variables**, then click **Save**:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY` (the publishable or anon key)
 
-The folder `public/` contains:
+   Vite bakes these into the bundle at build time. If they are missing, the app shows a "Supabase is not configured" screen.
+4. Every push to `main` rebuilds and redeploys.
+5. In Supabase, go to **Authentication → URL Configuration** and add your `*.workers.dev` URL, plus any custom domain, to **Site URL / Redirect URLs**.
 
-- `_redirects`: SPA fallback, so deep links like `/tasks` load correctly.
-- `_headers`: security headers and long-term caching for hashed assets.
+How routing works:
+
+- `"not_found_handling": "single-page-application"` in `wrangler.jsonc` serves `index.html` for paths like `/tasks`.
+- Don't add a `_redirects` file with `/* /index.html 200`. Workers report that rule as an infinite loop and the deploy fails.
+- `public/_headers` adds security headers and long-term caching for hashed assets.
 
 ## Project structure
 
 ```
-├── public/             favicon, _redirects, _headers
+├── public/             favicon, _headers
+├── wrangler.jsonc      Cloudflare Worker (static assets) config
 ├── src/                application code (see Architecture)
 ├── supabase/           schema.sql (tables + RLS), seed.sql
 ├── legacy/             earlier single-file prototype (reference only)

@@ -1,0 +1,12 @@
+{
+  // Cloudflare Workers static-assets deployment for the Vite build.
+  // "name" must match the Worker name shown in the Cloudflare dashboard.
+  "name": "taskmanager",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Serves index.html for unknown paths so routes like /tasks work on refresh.
+    // (Replaces the old public/_redirects rule, which loops on Workers.)
+    "not_found_handling": "single-page-application"
+  }
+}
