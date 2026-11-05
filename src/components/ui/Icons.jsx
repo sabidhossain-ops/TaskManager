@@ -37,4 +37,9 @@ export const AlertIcon = make(<><path d="M12 3l9.5 17h-19L12 3z" /><path d="M12 
 export const ClockIcon = make(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>);
 export const SpinnerArcIcon = make(<path d="M12 3a9 9 0 1 0 9 9" />);
 export const RefreshIcon = make(<><path d="M20 11a8 8 0 0 0-14.9-3M4 13a8 8 0 0 0 14.9 3" /><path d="M5 3v5h5M19 21v-5h-5" /></>);
-export const InboxIcon = make(<><path d="M3 13l3-8h12l3 8v6H3v-6z" /><path d="M3 13h5l1 3h6l1-3h5" /></>);
+export const UserTasksIcon = make(<><circle cx="9" cy="7" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M15.5 11.5l1.5 1.5 3-3" /></>);
+export const AuditIcon = make(<><path d="M6 3h9l4 4v14H6z" /><path d="M14 3v5h5M9 12h7M9 16h7" /></>);
+export const AdminIcon = make(<><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-8 8-8" /><circle cx="18" cy="17" r="2.2" /><path d="M18 13.5v1.3M18 19.2v1.3M14.5 17h1.3M20.2 17h1.3" /></>);
+export const DownloadIcon = make(<><path d="M12 4v11M7 10l5 5 5-5" /><path d="M4 20h16" /></>);
+export const FlagIcon = make(<><path d="M5 21V4" /><path d="M5 4h12l-2 4 2 4H5" /></>);
+export const InboxIcon =make(<><path d="M3 13l3-8h12l3 8v6H3v-6z" /><path d="M3 13h5l1 3h6l1-3h5" /></>);

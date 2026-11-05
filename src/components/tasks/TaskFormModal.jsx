@@ -2,38 +2,69 @@ import { useEffect, useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import FormField from '../ui/FormField';
-import { EMPTY_TASK, FIELD_LIMITS, TASK_PRIORITIES, TASK_STATUSES } from '../../constants/task';
-import { validateTask } from '../../utils/validation';
+import { FIELD_LIMITS, PRIORITIES } from '../../constants/task';
+import { useAuth } from '../../context/AuthContext';
+import { useRefData } from '../../context/RefDataContext';
+import { validateTaskForm } from '../../utils/validation';
+import { fromLocalInput, toLocalInput } from '../../utils/format';
+
+/** Options from a master list, keeping the current value even if it was removed from the list. */
+function Options({ values, current }) {
+  const list = current && !values.includes(current) ? [current, ...values] : values;
+  return list.map((v) => (
+    <option key={v} value={v}>
+      {v}
+    </option>
+  ));
+}
 
 /**
- * Create / edit form in a modal. `task` = null means "create".
- * `onSubmit(values)` must return a promise; field errors on the
- * thrown error (err.fieldErrors) are shown inline.
+ * Create a task (task = null) or edit its details (task = existing row).
+ * `onSubmit(values)` returns a promise; errors are shown in the form.
  */
 export default function TaskFormModal({ open, task, onClose, onSubmit }) {
-  const isEdit = Boolean(task);
-  const [values, setValues] = useState(EMPTY_TASK);
+  const isCreate = !task;
+  const { profile } = useAuth();
+  const { masterValues, experts } = useRefData();
+  const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    const first = (kind) => masterValues(kind)[0] ?? '';
     setValues(
       task
         ? {
-            title: task.title ?? '',
+            title: task.title,
             description: task.description ?? '',
-            priority: task.priority ?? EMPTY_TASK.priority,
-            status: task.status ?? EMPTY_TASK.status,
-            assigned_to: task.assigned_to ?? '',
+            task_type: task.task_type,
+            priority: task.priority,
+            center: task.center,
+            department: task.department,
+            source: task.source,
+            raised_by: task.raised_by,
+            contact: task.contact,
           }
-        : EMPTY_TASK,
+        : {
+            title: '',
+            description: '',
+            task_type: first('task_type'),
+            priority: 'Medium',
+            center: first('center'),
+            department: first('department'),
+            source: first('source'),
+            raised_by: profile?.full_name ?? '',
+            contact: '',
+            assigned_to: '',
+            deadline: toLocalInput(Date.now() + 2 * 864e5),
+          },
     );
     setErrors({});
     setFormError('');
     setSubmitting(false);
-  }, [open, task]);
+  }, [open, task]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (field) => (e) => {
     setValues((v) => ({ ...v, [field]: e.target.value }));
@@ -42,70 +73,84 @@ export default function TaskFormModal({ open, task, onClose, onSubmit }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const found = validateTask(values);
+    const found = validateTaskForm(values, { isCreate });
     setErrors(found);
     if (Object.keys(found).length) return;
-
     setSubmitting(true);
     setFormError('');
     try {
-      await onSubmit(values);
+      await onSubmit({ ...values, deadline: isCreate ? fromLocalInput(values.deadline) : undefined });
     } catch (err) {
-      if (err.fieldErrors) setErrors(err.fieldErrors);
       setFormError(err.message);
       setSubmitting(false);
     }
   }
 
-  const descLen = values.description?.length ?? 0;
-
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit task' : 'Create task'}
+      title={isCreate ? 'Create task' : `Edit ${task.task_no}`}
       size="lg"
       dismissable={!submitting}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button type="submit" form="task-form" loading={submitting}>
-            {isEdit ? 'Save changes' : 'Create task'}
-          </Button>
+          <Button type="submit" form="task-form" loading={submitting}>{isCreate ? 'Create task' : 'Save changes'}</Button>
         </>
       }
     >
       <form id="task-form" onSubmit={handleSubmit} noValidate className="space-y-4">
         {formError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-            {formError}
-          </div>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{formError}</div>
         )}
 
         <FormField label="Task title" required error={errors.title}>
-          <input type="text" value={values.title} onChange={set('title')} maxLength={FIELD_LIMITS.title.max} placeholder="e.g. Prepare monthly field report" className="input" />
+          <input type="text" value={values.title ?? ''} onChange={set('title')} maxLength={FIELD_LIMITS.title.max} className="input" placeholder="e.g. Printer not working at Badda Centre" />
         </FormField>
-
-        <FormField label="Description" error={errors.description} hint={`${descLen}/${FIELD_LIMITS.description.max} characters`}>
-          <textarea value={values.description} onChange={set('description')} rows={4} maxLength={FIELD_LIMITS.description.max} placeholder="Add details, context or acceptance criteria" className="input resize-y" />
+        <FormField label="Details" error={errors.description}>
+          <textarea rows={4} value={values.description ?? ''} onChange={set('description')} maxLength={FIELD_LIMITS.description.max} className="input resize-y" placeholder="What happened, who is affected, any error messages" />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label="Task type" required error={errors.task_type}>
+            <select value={values.task_type ?? ''} onChange={set('task_type')} className="input"><Options values={masterValues('task_type')} current={values.task_type} /></select>
+          </FormField>
           <FormField label="Priority" required error={errors.priority}>
-            <select value={values.priority} onChange={set('priority')} className="input">
-              {TASK_PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-            </select>
+            <select value={values.priority ?? ''} onChange={set('priority')} className="input"><Options values={PRIORITIES} current={values.priority} /></select>
           </FormField>
-          <FormField label="Status" required error={errors.status}>
-            <select value={values.status} onChange={set('status')} className="input">
-              {TASK_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+          <FormField label="Center" required error={errors.center}>
+            <select value={values.center ?? ''} onChange={set('center')} className="input"><Options values={masterValues('center')} current={values.center} /></select>
           </FormField>
-        </div>
+          <FormField label="Department" required error={errors.department}>
+            <select value={values.department ?? ''} onChange={set('department')} className="input"><Options values={masterValues('department')} current={values.department} /></select>
+          </FormField>
+          <FormField label="Source" required error={errors.source}>
+            <select value={values.source ?? ''} onChange={set('source')} className="input"><Options values={masterValues('source')} current={values.source} /></select>
+          </FormField>
+          <FormField label="Raised by" required error={errors.raised_by}>
+            <input type="text" value={values.raised_by ?? ''} onChange={set('raised_by')} maxLength={FIELD_LIMITS.raised_by.max} className="input" />
+          </FormField>
+          <FormField label="Raised by contact number" required error={errors.contact}>
+            <input type="tel" inputMode="tel" value={values.contact ?? ''} onChange={set('contact')} maxLength={20} className="input" placeholder="+880 17XX-XXXXXX" />
+          </FormField>
 
-        <FormField label="Assigned to" error={errors.assigned_to} hint="Name or email of the person responsible">
-          <input type="text" value={values.assigned_to} onChange={set('assigned_to')} maxLength={FIELD_LIMITS.assigned_to.max} placeholder="e.g. Nusrat Jahan" className="input" />
-        </FormField>
+          {isCreate && (
+            <>
+              <FormField label="Assign to" error={errors.assigned_to}>
+                <select value={values.assigned_to ?? ''} onChange={set('assigned_to')} className="input">
+                  <option value="">Leave unassigned</option>
+                  {experts.map((u) => (
+                    <option key={u.id} value={u.id}>{u.full_name}{u.designation ? ` — ${u.designation}` : ''}</option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Deadline" required error={errors.deadline}>
+                <input type="datetime-local" value={values.deadline ?? ''} onChange={set('deadline')} className="input" />
+              </FormField>
+            </>
+          )}
+        </div>
       </form>
     </Modal>
   );

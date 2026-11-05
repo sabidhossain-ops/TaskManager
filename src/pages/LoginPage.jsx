@@ -1,25 +1,30 @@
-import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { validateLogin } from '../utils/validation';
 import FormField from '../components/ui/FormField';
 import Button from '../components/ui/Button';
 import { Logo } from '../components/layout/Sidebar';
+import { homePath } from '../constants/navigation';
 
 export default function LoginPage() {
-  const { user, loading, signIn } = useAuth();
+  const { user, profile, role, loading, authError, signIn } = useAuth();
   const toast = useToast();
-  const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.from?.pathname || '/dashboard';
+  const redirectTo = location.state?.from?.pathname || homePath(role);
 
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) return <Navigate to={redirectTo} replace />;
+  // e.g. inactive account: the sign-in succeeded but the profile check signed the user out
+  useEffect(() => {
+    if (authError) setSubmitting(false);
+  }, [authError]);
+
+  if (!loading && user && profile) return <Navigate to={redirectTo} replace />;
 
   const set = (field) => (e) => {
     setValues((v) => ({ ...v, [field]: e.target.value }));
@@ -37,7 +42,7 @@ export default function LoginPage() {
     try {
       await signIn(values.email, values.password);
       toast.success('Signed in successfully.');
-      navigate(redirectTo, { replace: true });
+      // Redirect happens once the profile (role) has loaded.
     } catch (err) {
       setFormError(err.message);
       setSubmitting(false);
@@ -52,12 +57,12 @@ export default function LoginPage() {
         </div>
         <div className="card p-6 sm:p-8">
           <h1 className="text-xl font-semibold text-slate-900">Sign in</h1>
-          <p className="mt-1 text-sm text-slate-500">Use your work account to manage tasks.</p>
+          <p className="mt-1 text-sm text-slate-500">Use your work email and password.</p>
 
           <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
-            {formError && (
+            {(formError || authError) && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-                {formError}
+                {formError || authError}
               </div>
             )}
             <FormField label="Email address" error={errors.email}>
@@ -72,7 +77,7 @@ export default function LoginPage() {
           </form>
         </div>
         <p className="mt-6 text-center text-xs text-slate-500">
-          Accounts are created by an administrator in Supabase.
+          Accounts are created by an administrator under Users &amp; masters.
         </p>
       </div>
     </div>

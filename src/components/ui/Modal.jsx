@@ -34,7 +34,7 @@ export default function Modal({ open, onClose, title, size = 'md', dismissable =
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <div data-modal-open className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <div
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
         onClick={() => dismissable && onClose()}
