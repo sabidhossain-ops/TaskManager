@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BHL Task Management</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#0b6174;--bi:#fff;--ink:#1b2a33;--mute:#5d6f7a;--bg:#f2f5f7;--sf:#fff;--line:#d7dfe4;--ok:#1a7f4b;--okb:#e1f3e8;--warn:#9a5700;--warnb:#fdf0d8;--bad:#b42318;--badb:#fde7e4;--inf:#e3eef1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--brand:#55b6ca;--bi:#06222a;--ink:#e6edf1;--mute:#9bacb6;--bg:#11181c;--sf:#192226;--line:#2b3940;--ok:#58c58a;--okb:#143324;--warn:#e8a04a;--warnb:#3a2a10;--bad:#f08a7e;--badb:#3d1b17;--inf:#1c2f35}}
+:root[data-theme="dark"]{--brand:#55b6ca;--bi:#06222a;--ink:#e6edf1;--mute:#9bacb6;--bg:#11181c;--sf:#192226;--line:#2b3940;--ok:#58c58a;--okb:#143324;--warn:#e8a04a;--warnb:#3a2a10;--bad:#f08a7e;--badb:#3d1b17;--inf:#1c2f35}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
+.shell{display:grid;grid-template-columns:200px 1fr;min-height:100%}
+aside{background:var(--brand);color:var(--bi);padding:16px 10px}
+.logo{font-weight:600;font-size:15px;padding:4px 8px 16px}.logo small{display:block;font-weight:400;opacity:.8;font-size:12px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;padding:9px 10px;border-radius:6px;font:inherit;cursor:pointer}
+nav button.on{background:rgba(255,255,255,.18);font-weight:600}
+main{padding:18px 22px;min-width:0}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:20px;margin:0;font-weight:600}h2{font-size:15px;margin:18px 0 8px}
+.hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+.hd select,.fl select,.fl input{width:auto}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--sf);color:var(--ink);padding:7px 12px;border-radius:6px}
+button.pri{background:var(--brand);color:var(--bi);border-color:var(--brand);font-weight:500}
+button.bad{color:var(--bad)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.card b{display:block;font-size:22px;font-weight:600}.card span{color:var(--mute);font-size:12px}
+.card.bad b{color:var(--bad)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.panel{background:var(--sf);border:1px solid var(--line);border-radius:8px;padding:12px 14px}.panel h2{margin-top:0}
+.br{display:grid;grid-template-columns:110px 1fr 28px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.br i{background:var(--inf);height:10px;border-radius:5px;overflow:hidden}.br b{display:block;height:100%;background:var(--brand)}.br em{font-style:normal;text-align:right}
+.fl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}.fl input[type=search]{width:220px}
+.wrap{overflow-x:auto;background:var(--sf);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:860px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--mute);font-size:12px}tbody tr{cursor:pointer}tbody tr:hover{background:var(--inf)}
+td:nth-child(2){white-space:normal;min-width:200px}.bt{color:var(--bad);font-weight:500}
+.chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:500;background:var(--inf)}
+.chip.ok{background:var(--okb);color:var(--ok)}.chip.warn{background:var(--warnb);color:var(--warn)}.chip.bad{background:var(--badb);color:var(--bad)}
+.empty{padding:36px;text-align:center;color:var(--mute)}.auth{max-width:380px;margin:10vh auto 0}tbody tr.crit,tbody tr.crit:hover{background:var(--badb)}tbody tr.crit td:first-child{box-shadow:inset 4px 0 var(--bad)}
+.ov{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,.45);display:flex;justify-content:flex-end;z-index:10}
+.dr{width:min(740px,100%);height:100%;overflow:auto;background:var(--bg);padding:calc(18px + env(safe-area-inset-top,0px)) 20px calc(18px + env(safe-area-inset-bottom,0px))}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 16px;margin:10px 0}.facts span{display:block;color:var(--mute);font-size:12px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+label{display:block;margin:8px 0;font-size:13px;color:var(--mute)}label>*{margin-top:3px;color:var(--ink)}
+.tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line)}.tl li{margin:0 0 10px;padding-left:10px;position:relative}
+.tl li:before{content:"";position:absolute;left:-20px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--brand)}.tl small{color:var(--mute)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;opacity:0;pointer-events:none;z-index:20;max-width:90%}#toast.show{opacity:1}
+@media(max-width:760px){.shell{grid-template-columns:1fr}aside{padding:8px}nav{display:flex;gap:4px;overflow-x:auto}nav button{width:auto;white-space:nowrap}.logo{padding-bottom:6px}main{padding:14px}}
+</style></head>
+<body><div id="app"></div><div id="ov"></div><div id="toast" role="status"></div>
+<script>
+const CFG={
+ pr:{Critical:{res:240},High:{res:480},Medium:{res:2880},Low:{res:7200}},
+ types:['Incident','Service Request','IT Support','Application Support','Infrastructure','Network','Hardware','Software','Security','Database','Development','Change Request','Vendor Issue','User Access','New Center Support','Procurement','Other'],
+ centers:['BRAC Healthcare HO','Badda Centre','Noakhali Centre','Siddheswari Centre','Kazipara Centre','Other'],
+ depts:['IT','Operations','Clinical','Finance','HR','Procurement'],
+ src:['Email','Phone','WhatsApp','Portal','Walk-in','Monitoring'],
+ roots:['User Error','Application Issue','Network Issue','Hardware Issue','Vendor Issue','Configuration Issue','Infrastructure Issue','Unknown','Other'],
+ desig:['IT Officer','Network Engineer','Application Support Engineer','Database Administrator','System Administrator','Assistant Manager, IT','Manager, IT','Head of IT']};
+const ST=['New','Assigned','Acknowledged','In Progress','On Hold','Resolved','Closed','Cancelled'],OPEN=ST.slice(0,5);
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tasks=[],users=[],M={},ready=false,me=null,db=null,view='dash',openId=null,creating=false,form=null,F={q:'',st:'',pr:'',od:false},tt;
+const myId=()=>{try{return localStorage.getItem('bhl_me')}catch(e){return null}};
+const U=id=>users.find(u=>u.id===id)?.name||'Unassigned',UD=id=>{const u=users.find(x=>x.id===id);return u?u.name+(u.designation?' ('+u.designation+')':''):'Unassigned'},experts=()=>users.filter(u=>u.role==='Expert'&&u.active!==false),ML=k=>M[k]||CFG[k];
+const isOpen=t=>OPEN.includes(t.status),overdue=t=>isOpen(t)&&Date.now()>t.deadline;
+const D=ms=>ms?new Date(ms).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+const loc=ms=>new Date(ms-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);
+function age(t){const m=Math.max(0,((t.resolved||t.closed||Date.now())-t.created)/6e4),h=m/60;return h<1?Math.round(m)+' min':h<48?h.toFixed(1)+' h':(h/24).toFixed(1)+' days'}
+function sla(t){if(t.status==='Cancelled')return '—';const due=t.created+CFG.pr[t.priority].res*6e4;if(t.resolved)return t.resolved<=due?'SLA Met':'SLA Breached';const n=Date.now();return n>due?'SLA Breached':(n-t.created)/(due-t.created)>.75?'At Risk':'Within SLA'}
+const sc=s=>s==='SLA Breached'?'bad':s==='At Risk'?'warn':s==='—'||s==='Within SLA'?'':'ok';
+function toast(m){const e=$('#toast');e.textContent=m;e.className='show';clearTimeout(tt);tt=setTimeout(()=>e.className='',3500)}
+async function save(t){
+ if(db){try{await db.collection('tasks').doc(t.id).set(t)}catch(e){toast('Unable to update the task at this moment. Please try again or contact the system administrator.')}return}
+ const i=tasks.findIndex(x=>x.id===t.id);i<0?tasks.push(t):tasks[i]=t;try{localStorage.setItem('bhl_tasks',JSON.stringify(tasks))}catch(e){}render()}
+const hash=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+async function usave(u){if(db){try{await db.collection('users').doc(u.id).set(u)}catch(e){toast('Unable to save the user. Please try again.')}return}const i=users.findIndex(x=>x.id===u.id);i<0?users.push(u):users[i]=u;try{localStorage.setItem('bhl_users',JSON.stringify(users))}catch(e){}render()}
+const MD=k=>'config/'+(k==='desig'?'designations':k);
+async function msave(k,l){if(db){try{await db.doc(MD(k)).set({list:l})}catch(e){toast('Unable to save the list. Please try again.')}return}M[k]=l;try{localStorage.setItem('bhl_m_'+k,JSON.stringify(l))}catch(e){}render()}
+const log=(t,act,o,n)=>t.audit.push({t:Date.now(),by:me.id,act,old:o??'',nw:n??''}),
+ setS=(t,s)=>{log(t,'Status change',t.status,s);t.status=s},
+ rem=(t,x,k)=>{t.worklog.push({t:Date.now(),by:me.id,status:t.status,text:x,kind:k||'Remark'});log(t,k||'Remark added','',x.slice(0,60))},
+ first=t=>{if(!t.firstResponse)t.firstResponse=Date.now()};
+const A={
+ assign(t,f){if(!f.to)return'Select an expert.';if(t.assignee&&!f.reason)return'Enter the reason for the transfer.';log(t,t.assignee?'Reassigned':'Assigned',t.assignee?U(t.assignee):'',U(f.to));t.assign.push({t:Date.now(),from:t.assignee,to:f.to,by:me.id,reason:f.reason||''});t.assignee=f.to;if(t.status!=='Assigned')setS(t,'Assigned')},
+ ack(t){first(t);setS(t,'Acknowledged')},start(t){first(t);setS(t,'In Progress')},
+ hold(t,f){if(!f.text)return'Enter the reason for holding.';setS(t,'On Hold');rem(t,f.text)},
+ remark(t,f){if(!f.text)return'Write a remark.';first(t);rem(t,f.text)},
+ resolve(t,f){if(!f.summary||!f.action)return'Resolution summary and action taken are required.';t.resolution={summary:f.summary,root:f.root,action:f.action,prevent:f.prevent||''};t.resolved=Date.now();setS(t,'Resolved');rem(t,'Resolved: '+f.summary,'Resolution')},
+ close(t,f){t.closed=Date.now();setS(t,'Closed');if(f.text)rem(t,f.text)},
+ cancel(t,f){if(!f.text)return'Enter a cancellation reason.';t.closed=Date.now();setS(t,'Cancelled');rem(t,f.text)},
+ extreq(t,f){const d=new Date(f.when).getTime();if(t.ext.some(e=>e.state==='Pending'))return'An extension request is already pending.';if(!d||d<=t.deadline)return'Requested deadline must be later than the current deadline.';if(!f.text)return'Enter a reason.';t.ext.push({t:Date.now(),by:me.id,req:d,cur:t.deadline,reason:f.text,state:'Pending'});log(t,'Extension requested',D(t.deadline),D(d))},
+ extdec(t,f){const e=t.ext.find(x=>x.state==='Pending');if(!e)return'No pending request.';e.state=f.ok?'Approved':'Rejected';e.by2=me.id;if(f.ok){t.deadline=e.req;t.extCount++}log(t,'Extension '+e.state.toLowerCase(),D(e.cur),D(e.req))}};
+async function run(name,f){const o=tasks.find(x=>x.id===openId);if(!o)return;const t=structuredClone(o),err=A[name](t,f||{});if(err)return toast(err);form=null;await save(t)}
+async function create(f){
+ if(!f.title.trim())return toast('Task title cannot be blank.');if(!/^[0-9+\-\s()]{6,}$/.test(f.contact.trim()))return toast('Enter a valid contact number for the person who raised the task.');const dl=new Date(f.deadline).getTime();if(!dl||dl<=Date.now())return toast('Deadline must be in the future.');
+ const y=new Date().getFullYear(),n=Math.max(0,...tasks.filter(t=>t.id.startsWith('BHL-TASK-'+y)).map(t=>+t.id.split('-')[3]))+1,now=Date.now();
+ const t={id:`BHL-TASK-${y}-${String(n).padStart(6,'0')}`,title:f.title.trim(),desc:f.desc,type:f.type,priority:f.priority,center:f.center,dept:f.dept,src:f.src,raisedBy:f.raisedBy||me.name,contact:f.contact.trim(),assignee:f.to||'',created:now,deadline:dl,origDeadline:dl,status:f.to?'Assigned':'New',firstResponse:null,resolved:null,closed:null,extCount:0,worklog:[],assign:f.to?[{t:now,from:'',to:f.to,by:me.id,reason:'Initial assignment'}]:[],ext:[],resolution:null,audit:[{t:now,by:me.id,act:'Task created',old:'',nw:f.priority}]};
+ if(f.to)t.audit.push({t:now,by:me.id,act:'Assigned',old:'',nw:U(f.to)});
+ creating=false;openId=t.id;await save(t)}
+function actions(t){const r=me.role,sup=r==='Admin'||r==='Supervisor',mine=t.assignee===me.id,o=isOpen(t),L=[];
+ if(sup&&o)L.push(['assign',t.assignee?'Reassign':'Assign']);
+ if(mine&&o){if(t.status==='Assigned')L.push(['ack','Acknowledge']);if(['Assigned','Acknowledged','On Hold'].includes(t.status))L.push(['start','Start work']);if(t.status==='In Progress')L.push(['hold','Put on hold'],['resolve','Mark resolved']);L.push(['forward','Forward'],['extreq','Request extension'])}
+ if((sup||mine)&&o)L.push(['remark','Add remark']);if(sup&&t.status==='Resolved')L.push(['close','Close task']);if(sup&&o)L.push(['cancel','Cancel task']);return L}
+const TA=(l,k)=>`<label>${l}<textarea data-f="${k}" rows="2"></textarea></label>`,SEL=(l,k,a)=>`<label>${l}<select data-f="${k}">${a.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`;
+function formHtml(t){if(!form)return'';let b='',s=form;
+ if(form==='assign'||form==='forward'){s='assign';b=`<label>${form==='forward'?'Forward to':'Assign to'}<select data-f="to"><option value="">Select expert</option>${experts().filter(u=>u.id!==t.assignee).map(u=>`<option value="${u.id}">${esc(u.name)}${u.designation?' — '+esc(u.designation):''}</option>`).join('')}</select></label>`+TA('Reason','reason')}
+ else if(form==='hold')b=TA('Reason for hold','text');else if(form==='remark')b=TA('Remark','text');else if(form==='cancel')b=TA('Cancellation reason','text');else if(form==='close')b=TA('Closure remark (optional)','text');
+ else if(form==='extreq')b=`<label>Requested deadline<input type="datetime-local" data-f="when" value="${loc(t.deadline+864e5)}"></label>`+TA('Reason','text');
+ else if(form==='resolve')b=TA('Resolution summary','summary')+SEL('Root cause','root',CFG.roots)+TA('Action taken','action')+TA('Preventive action','prevent');
+ return `<div class="panel" id="frm">${b}<div class="acts"><button class="pri" data-sub="${s}">Submit</button><button data-a="x">Cancel</button></div></div>`}
+function detail(t){const s=sla(t),pend=t.ext.find(e=>e.state==='Pending'),sup=me.role==='Admin'||me.role==='Supervisor';
+ const f=(l,v)=>`<div><span>${l}</span>${v}</div>`;
+ return `<div class="ov" data-a="bg"><div class="dr" role="dialog" aria-label="Task details"><div class="acts" style="justify-content:space-between;margin-top:0"><b>${t.id}</b><button data-a="x">Close</button></div>
+ <h1>${esc(t.title)}</h1><p>${t.priority==='Critical'?'<span class="chip bad">Critical</span> ':''}<span class="chip">${t.status}</span> <span class="chip ${sc(s)}">${s}</span> ${overdue(t)?'<span class="chip bad">Overdue</span>':''}</p>
+ <div class="facts">${f('Type',esc(t.type))}${f('Priority',t.priority==='Critical'?'<span class="chip bad">Critical</span>':t.priority)}${f('Center',esc(t.center))}${f('Department',esc(t.dept))}${f('Raised by',esc(t.raisedBy))}${f('Contact',esc(t.contact||'—'))}${f('Source',esc(t.src))}${f('Assigned to',esc(UD(t.assignee)))}${f('Created',D(t.created))}${f('Deadline',D(t.deadline)+(t.extCount?` (extended ${t.extCount}×, original ${D(t.origDeadline)})`:''))}${f('First response',D(t.firstResponse))}${f('Resolved',D(t.resolved))}${f('Closed',D(t.closed))}${f('Aging',age(t))}</div>
+ <p>${esc(t.desc)||'<i>No description.</i>'}</p>
+ ${t.resolution?`<div class="panel"><h2>Resolution</h2><p>${esc(t.resolution.summary)}</p><p><span class="chip">${esc(t.resolution.root)}</span></p><p><b>Action taken:</b> ${esc(t.resolution.action)}</p>${t.resolution.prevent?`<p><b>Preventive action:</b> ${esc(t.resolution.prevent)}</p>`:''}</div>`:''}
+ ${pend?`<div class="panel"><b>Extension requested</b> by ${U(pend.by)}: ${D(pend.cur)} → ${D(pend.req)}<br>${esc(pend.reason)}${sup?`<div class="acts"><button class="pri" data-a="extok">Approve</button><button class="bad" data-a="extno">Reject</button></div>`:''}</div>`:''}
+ <div class="acts">${actions(t).map(a=>`<button data-a="${a[0]}">${a[1]}</button>`).join('')}</div>${formHtml(t)}
+ <h2>Timeline</h2><ul class="tl">${t.audit.map(a=>`<li><b>${esc(a.act)}</b>${a.old||a.nw?` — ${esc(a.old)}${a.old&&a.nw?' → ':''}${esc(a.nw)}`:''}<br><small>${D(a.t)} · ${U(a.by)}</small></li>`).join('')}</ul>
+ <h2>Worklog</h2>${t.worklog.length?`<ul class="tl">${t.worklog.map(w=>`<li>${esc(w.text)}<br><small>${D(w.t)} · ${U(w.by)} · ${w.status}</small></li>`).join('')}</ul>`:'<p class="empty">No remarks yet.</p>'}
+ ${t.assign.length>1||t.assign[0]?.from?`<h2>Assignment history</h2><ul class="tl">${t.assign.map(a=>`<li>${a.from?U(a.from)+' → ':''}${U(a.to)}<br><small>${D(a.t)} · by ${U(a.by)} · ${esc(a.reason)}</small></li>`).join('')}</ul>`:''}
+ ${t.ext.length?`<h2>Deadline history</h2><ul class="tl">${t.ext.map(e=>`<li>${D(e.cur)} → ${D(e.req)} · ${e.state}<br><small>${D(e.t)} · ${U(e.by)} · ${esc(e.reason)}</small></li>`).join('')}</ul>`:''}
+ </div></div>`}
+function createForm(){const O=a=>a.map(x=>`<option>${esc(x)}</option>`).join('');
+ return `<div class="ov" data-a="bg"><div class="dr" role="dialog" aria-label="Create task"><div class="acts" style="justify-content:space-between;margin-top:0"><h1>Create task</h1><button data-a="x">Close</button></div><div id="cf">
+ <label>Task title<input data-f="title"></label><label>Details<textarea data-f="desc" rows="4"></textarea></label>
+ <div class="facts"><label>Task type<select data-f="type">${O(ML('types'))}</select></label><label>Priority<select data-f="priority">${O(Object.keys(CFG.pr))}</select></label><label>Center<select data-f="center">${O(ML('centers'))}</select></label><label>Department<select data-f="dept">${O(CFG.depts)}</select></label><label>Source<select data-f="src">${O(ML('src'))}</select></label><label>Raised by<input data-f="raisedBy" value="${esc(me.name)}"></label><label>Raised by contact number<input data-f="contact" type="tel" inputmode="tel"></label>
+ <label>Assign to<select data-f="to"><option value="">Leave unassigned</option>${experts().map(u=>`<option value="${u.id}">${esc(u.name)}${u.designation?' — '+esc(u.designation):''}</option>`).join('')}</select></label><label>Deadline<input type="datetime-local" data-f="deadline" value="${loc(Date.now()+2*864e5)}"></label></div>
+ <div class="acts"><button class="pri" data-a="mk">Create task</button></div></div></div></div>`}
+const bars=o=>{const m=Math.max(1,...Object.values(o));return Object.entries(o).map(([k,v])=>`<div class="br"><span>${esc(k)}</span><i><b style="width:${v/m*100}%"></b></i><em>${v}</em></div>`).join('')};
+function dash(){const T=me.role==='Expert'?tasks.filter(t=>t.assignee===me.id):tasks,c=s=>T.filter(t=>t.status===s).length,od=T.filter(overdue).length,br=T.filter(t=>sla(t)==='SLA Breached').length,td=T.filter(t=>isOpen(t)&&new Date(t.deadline).toDateString()===new Date().toDateString()).length,rs=T.filter(t=>t.resolved),avg=rs.length?age({created:0,resolved:rs.reduce((a,t)=>a+t.resolved-t.created,0)/rs.length}):'—';
+ const K=[['Total',T.length],['New',c('New')],['Assigned',c('Assigned')+c('Acknowledged')],['In progress',c('In Progress')],['On hold',c('On Hold')],['Resolved',c('Resolved')],['Closed',c('Closed')],['Critical open',T.filter(t=>t.priority==='Critical'&&isOpen(t)).length,'bad'],['Overdue',od,'bad'],['SLA breached',br,'bad'],['Due today',td],['Avg resolution',avg]];
+ const ag={'0–1 days':0,'2–3 days':0,'4–7 days':0,'8–15 days':0,'15+ days':0};T.filter(isOpen).forEach(t=>{const d=(Date.now()-t.created)/864e5;ag[d<2?'0–1 days':d<4?'2–3 days':d<8?'4–7 days':d<16?'8–15 days':'15+ days']++});
+ const ex={};experts().forEach(u=>ex[u.name]=T.filter(t=>t.assignee===u.id&&isOpen(t)).length);
+ const so={};ST.forEach(s=>so[s]=c(s));const po={};Object.keys(CFG.pr).forEach(p=>po[p]=T.filter(t=>t.priority===p).length);
+ return `<div class="cards">${K.map(k=>`<div class="card ${k[2]||''}"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}</div>
+ <div class="grid2"><div class="panel"><h2>Tasks by status</h2>${bars(so)}</div><div class="panel"><h2>Tasks by priority</h2>${bars(po)}</div><div class="panel"><h2>Open task aging</h2>${bars(ag)}</div><div class="panel"><h2>Open tasks by expert</h2>${bars(ex)}</div></div>`}
+const row=t=>{const s=sla(t);return `<tr data-id="${t.id}" tabindex="0" class="${t.priority==='Critical'?'crit':''}"><td>${t.id}</td><td>${esc(t.title)}</td><td>${t.priority==='Critical'?'<span class="chip bad">Critical</span>':t.priority}</td><td>${esc(t.center)}</td><td>${U(t.assignee)}</td><td class="${overdue(t)?'bt':''}">${D(t.deadline)}</td><td><span class="chip">${t.status}</span></td><td>${age(t)}</td><td><span class="chip ${sc(s)}">${s}</span></td></tr>`};
+function filtered(){const q=F.q.toLowerCase();return tasks.filter(t=>(view!=='mine'||t.assignee===me.id)&&(!q||t.id.toLowerCase().includes(q)||t.title.toLowerCase().includes(q))&&(!F.st||t.status===F.st)&&(!F.pr||t.priority===F.pr)&&(!F.od||overdue(t))).sort((a,b)=>b.created-a.created)}
+function list(){const L=filtered();return L.length?`<div class="wrap"><table><thead><tr>${['Task ID','Title','Priority','Center','Assigned to','Deadline','Status','Aging','SLA'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${L.map(row).join('')}</tbody></table></div>`:`<div class="panel empty">${tasks.length?'No tasks match these filters.':'No tasks yet. Create the first task to start tracking work.'}</div>`}
+function tasksView(){const O=a=>a.map(x=>`<option>${x}</option>`).join('');return `<div class="fl"><input type="search" id="q" placeholder="Search task ID or title" value="${esc(F.q)}"><select id="fs"><option value="">All statuses</option>${O(ST)}</select><select id="fp"><option value="">All priorities</option>${O(Object.keys(CFG.pr))}</select><label style="margin:0"><input type="checkbox" id="fo" ${F.od?'checked':''} style="width:auto"> Overdue only</label><button id="clr">Clear filters</button>${view==='all'?'<button id="csv">Export CSV</button>':''}</div><div id="list">${list()}</div>`}
+function auditView(){const L=tasks.flatMap(t=>t.audit.map(a=>({...a,id:t.id}))).sort((a,b)=>b.t-a.t).slice(0,200);return L.length?`<div class="wrap"><table><thead><tr><th>Date/time</th><th>User</th><th>Action</th><th>Task</th><th>Old value</th><th>New value</th></tr></thead><tbody>${L.map(a=>`<tr style="cursor:default"><td>${D(a.t)}</td><td>${U(a.by)}</td><td>${esc(a.act)}</td><td>${a.id}</td><td>${esc(a.old)}</td><td>${esc(a.nw)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="panel empty">No activity recorded yet.</div>'}
+function authView(){$('#ov').innerHTML='';const first=!users.length;
+ $('#app').innerHTML=`<div class="auth panel" id="auth"><div class="logo" style="color:var(--brand)">Task Management<small>BRAC Healthcare Ltd.</small></div><h2>${first?'Set up the administrator account':'Sign in'}</h2>${first?'<label>Full name<input data-f="name" autocomplete="name"></label>':''}<label>Login ID<input data-f="id" autocomplete="username"></label><label>Password${first?' (at least 8 characters)':''}<input type="password" data-f="pw" autocomplete="${first?'new-password':'current-password'}"></label><div class="acts"><button class="pri" id="${first?'su':'lg'}">${first?'Create administrator':'Sign in'}</button></div></div>`}
+function admView(){const MP=[['desig','Designation master'],['types','Task type master'],['centers','Center master'],['src','Source master']].map(([k,t])=>`<div class="panel" id="m_${k}"><h2>${t}</h2><div class="fl"><input data-f="d" placeholder="New value" style="width:200px"><button data-ad="${k}">Add</button></div>${ML(k).map(d=>`<div class="br" style="grid-template-columns:1fr auto"><span>${esc(d)}</span><button data-rd="${k}|${esc(d)}">Remove</button></div>`).join('')}</div>`).join('');const O=a=>a.map(x=>`<option>${esc(x)}</option>`).join('');
+ return `<div class="grid2"><div class="panel" id="uf"><h2>Create user</h2><label>Full name<input data-f="name"></label><label>Login ID<input data-f="id"></label><label>Temporary password (at least 8 characters)<input type="password" data-f="pw"></label><label>Role<select data-f="role">${O(['Expert','Supervisor','Management','Admin'])}</select></label><label>Designation<select data-f="designation">${O(ML('desig'))}</select></label><div class="acts"><button class="pri" id="au">Create user</button></div></div>
+ ${MP}</div>
+ <h2>Users</h2><div class="wrap"><table><thead><tr><th>Name</th><th>Login ID</th><th>Designation</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr style="cursor:default"><td>${esc(u.name)}</td><td>${esc(u.loginId)}</td><td>${esc(u.designation)}</td><td>${u.role}</td><td><span class="chip ${u.active===false?'bad':'ok'}">${u.active===false?'Inactive':'Active'}</span></td><td><button data-tg="${u.id}">${u.active===false?'Activate':'Deactivate'}</button> <input type="password" data-pwi="${u.id}" placeholder="New password" style="width:140px"><button data-pw="${u.id}">Set password</button></td></tr>`).join('')}</tbody></table></div>`}
+const NAV={Admin:[['dash','Dashboard'],['all','All tasks'],['mine','My tasks'],['audit','Audit log'],['adm','Users & masters']],Supervisor:[['dash','Dashboard'],['all','Team tasks'],['mine','My tasks'],['audit','Audit log']],Expert:[['mine','My tasks'],['dash','My dashboard']],Management:[['dash','Dashboard'],['all','All tasks'],['audit','Audit log']]};
+function render(){if(!ready){$('#app').innerHTML='<div class="empty">Loading…</div>';return}if(!me)return authView();const nav=NAV[me.role];if(!nav.some(n=>n[0]===view))view=nav[0][0];
+ const body=view==='dash'?dash():view==='audit'?auditView():view==='adm'?admView():tasksView(),can=me.role==='Admin'||me.role==='Supervisor';
+ $('#app').innerHTML=`<div class="shell"><aside><div class="logo">Task Management<small>BRAC Healthcare Ltd.</small></div><nav>${nav.map(n=>`<button class="${n[0]===view?'on':''}" data-v="${n[0]}">${n[1]}</button>`).join('')}</nav></aside><main><header><h1>${nav.find(n=>n[0]===view)[1]}</h1><div class="hd"><span><b>${esc(me.name)}</b><br><small style="color:var(--mute)">${esc(me.designation||'')} · ${me.role}</small></span><button data-a="out">Sign out</button>${can?'<button class="pri" data-a="new">Create task</button>':''}</div></header>${body}</main></div>`;
+ if(view==='all'||view==='mine'){$('#fs').value=F.st;$('#fp').value=F.pr}
+ const t=tasks.find(x=>x.id===openId);$('#ov').innerHTML=creating?createForm():t?detail(t):''}
+const gather=sel=>Object.fromEntries([...document.querySelectorAll(sel+' [data-f]')].map(e=>[e.dataset.f,e.value]));
+document.addEventListener('click',async e=>{const g=e.target.closest('[data-v],[data-a],[data-sub],[data-id],#clr,#csv,#lg,#su,#au,[data-ad],[data-tg],[data-pw],[data-rd]');if(!g)return;
+ const lid=v=>v.trim().toLowerCase(),nid=()=>'u'+Date.now().toString(36),sess=u=>{me=u;try{localStorage.setItem('bhl_me',u.id)}catch(x){}};
+ if(g.id==='lg'){const f=gather('#auth'),u=users.find(x=>x.loginId===lid(f.id));if(!u||u.hash!==await hash(u.loginId+':'+f.pw))return toast('Incorrect login ID or password.');if(u.active===false)return toast('This account is inactive. Contact the administrator.');sess(u);view=NAV[u.role][0][0];return render()}
+ if(g.id==='su'){const f=gather('#auth');if(!f.name.trim()||!f.id.trim()||f.pw.length<8)return toast('Enter a name, a login ID and a password of at least 8 characters.');const l=lid(f.id),u={id:nid(),name:f.name.trim(),loginId:l,hash:await hash(l+':'+f.pw),role:'Admin',designation:'System Administrator',active:true};await usave(u);sess(u);view='dash';return render()}
+ if(g.id==='au'){const f=gather('#uf'),l=lid(f.id);if(!f.name.trim()||!l)return toast('Enter the name and login ID.');if(f.pw.length<8)return toast('Password must be at least 8 characters.');if(users.some(x=>x.loginId===l))return toast('This login ID already exists.');await usave({id:nid(),name:f.name.trim(),loginId:l,hash:await hash(l+':'+f.pw),role:f.role,designation:f.designation,active:true});return toast('User created.')}
+ if(g.dataset.ad){const k=g.dataset.ad,v=(gather('#m_'+k).d||'').trim();if(!v)return toast('Enter a value.');if(ML(k).includes(v))return toast('This value already exists.');return msave(k,[...ML(k),v])}
+ if(g.dataset.rd){const[k,...r]=g.dataset.rd.split('|'),v=r.join('|');if(ML(k).length<=1)return toast('Keep at least one value in the list.');return msave(k,ML(k).filter(x=>x!==v))}
+ if(g.dataset.tg){const u=users.find(x=>x.id===g.dataset.tg);if(u.id===me.id)return toast('You cannot deactivate your own account.');return usave({...u,active:u.active===false})}
+ if(g.dataset.pw){const v=document.querySelector(`[data-pwi="${g.dataset.pw}"]`).value,u=users.find(x=>x.id===g.dataset.pw);if(v.length<8)return toast('Password must be at least 8 characters.');await usave({...u,hash:await hash(u.loginId+':'+v)});return toast('Password updated.')}
+ if(g.dataset.v){view=g.dataset.v;return render()}
+ if(g.dataset.id){openId=g.dataset.id;form=null;return render()}
+ if(g.id==='clr'){F={q:'',st:'',pr:'',od:false};return render()}
+ if(g.id==='csv'){const L=filtered(),h=['id','title','type','priority','center','assignee','created','deadline','status','aging','sla'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csv=[h.join(',')].concat(L.map(t=>[t.id,t.title,t.type,t.priority,t.center,U(t.assignee),D(t.created),D(t.deadline),t.status,age(t),sla(t)].map(q).join(','))).join('\n');
+  try{const d=await window.claude.use('downloads');if(!d)throw 0;await d.save({filename:'BHL_tasks.csv',data:csv})}catch(x){toast('Export is not available in this view.')}return}
+ if(g.dataset.sub)return run(g.dataset.sub,gather('#frm'));
+ const a=g.dataset.a;
+ if(a==='out'){me=null;openId=null;creating=false;form=null;try{localStorage.removeItem('bhl_me')}catch(x){}return render()}
+ if(a==='bg'){if(e.target!==g)return;a==='bg'&&(openId=null,creating=false,form=null);return render()}
+ if(a==='x'){if(form){form=null}else{openId=null;creating=false}return render()}
+ if(a==='new'){creating=true;return render()}
+ if(a==='mk')return create(gather('#cf'));
+ if(a==='extok'||a==='extno')return run('extdec',{ok:a==='extok'});
+ if(a==='ack'||a==='start')return run(a);
+ form=a;render()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest?.('#auth'))($('#lg')||$('#su')).click();if(e.key==='Enter'&&e.target.dataset?.id){openId=e.target.dataset.id;render()}if(e.key==='Escape'&&(openId||creating)){openId=null;creating=false;form=null;render()}});
+document.addEventListener('input',e=>{if(e.target.id==='q'){F.q=e.target.value;$('#list').innerHTML=list()}});
+document.addEventListener('change',e=>{const i=e.target.id;if(i==='fs'||i==='fp'||i==='fo'){F.st=$('#fs').value;F.pr=$('#fp').value;F.od=$('#fo').checked;$('#list').innerHTML=list()}});
+const LJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+tasks=LJ('bhl_tasks',[]);users=LJ('bhl_users',[]);['desig','types','centers','src'].forEach(k=>{const v=LJ('bhl_m_'+k,null);if(v)M[k]=v});
+const setMe=()=>{me=users.find(u=>u.id===myId()&&u.active!==false)||null};
+const rr=()=>{if(!(creating||form||document.activeElement?.matches?.('input,textarea,select')))render();else{const l=$('#list');if(l)l.innerHTML=list()}};
+setInterval(()=>{if(me&&!openId&&!creating&&view!=='audit'&&view!=='adm'&&document.activeElement===document.body)render()},60000);
+if(!window.claude){ready=true;setMe();render()}
+else window.claude.use('db').then(d=>{if(!d){ready=true;setMe();return render()}db=d;tasks=[];users=[];M={};
+ d.collection('tasks').onSnapshot(s=>{tasks=s.docs.map(x=>x.data());if(ready&&me)rr()},()=>{});
+ d.collection('users').onSnapshot(s=>{users=s.docs.map(x=>x.data());ready=true;setMe();rr()},()=>{ready=true;render()});
+ ['desig','types','centers','src'].forEach(k=>d.doc(MD(k)).onSnapshot(s=>{if(s.exists)M[k]=s.data().list;else delete M[k];if(ready&&me)rr()},()=>{}))}).catch(()=>{ready=true;setMe();render()});
+render();
+</script></body></html>
