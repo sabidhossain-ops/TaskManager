@@ -56,7 +56,7 @@ create table if not exists app_private.settings (
   value text not null default ''
 );
 alter table app_private.settings enable row level security; -- not exposed via the API; RLS as defence in depth
-insert into app_private.settings (key, value) values ('functions_url', '') on conflict (key) do nothing;
+insert into app_private.settings (key, value) values ('functions_url', ''), ('public_api_key', '') on conflict (key) do nothing;
 
 -- Permission catalogue and role presets
 create or replace function app_private.all_permissions()
@@ -413,6 +413,7 @@ declare
   v_email text;
   v_id    bigint;
   v_url   text;
+  v_key   text;
 begin
   if new.to_user is null or new.to_user = new.assigned_by then
     return new; -- self-assignment: no email
@@ -427,11 +428,14 @@ begin
 
   if v_email is not null then
     select value into v_url from app_private.settings where key = 'functions_url';
+    select value into v_key from app_private.settings where key = 'public_api_key';
     if coalesce(v_url, '') <> '' then
+      -- The publishable (public) key lets the call pass the function's JWT check
       perform net.http_post(
         url     := rtrim(v_url, '/') || '/notify',
         body    := jsonb_build_object('type', 'assignment', 'notification_id', v_id),
-        headers := '{"Content-Type": "application/json"}'::jsonb
+        headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', coalesce(v_key, ''),
+                                      'Authorization', 'Bearer ' || coalesce(v_key, ''))
       );
     end if;
   end if;
@@ -915,8 +919,7 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
--- 8. One-time project setting (run separately, with YOUR project ref):
---   update app_private.settings
---      set value = 'https://<project-ref>.supabase.co/functions/v1'
---    where key = 'functions_url';
+-- 8. One-time project settings (run separately, with YOUR values):
+--   update app_private.settings set value = 'https://<project-ref>.supabase.co/functions/v1' where key = 'functions_url';
+--   update app_private.settings set value = '<publishable (anon) key>' where key = 'public_api_key';
 -- ---------------------------------------------------------------------
