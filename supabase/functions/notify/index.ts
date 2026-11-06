@@ -61,10 +61,14 @@ function appUrl() {
 
 /** Sends one email through Brevo or Resend, whichever key is configured. */
 async function sendMail(to: { email: string; name?: string }, subject: string, html: string, text: string) {
-  const fromEmail = Deno.env.get('MAIL_FROM_EMAIL');
-  const fromName = Deno.env.get('MAIL_FROM_NAME') || 'BHL Task Management';
-  const brevo = Deno.env.get('BREVO_API_KEY');
-  const resend = Deno.env.get('RESEND_API_KEY');
+  // Tolerate stray spaces / quotes pasted into the secrets
+  const env = (k: string) => (Deno.env.get(k) ?? '').trim().replace(/^["']|["']$/g, '').trim();
+  const fromEmail = env('MAIL_FROM_EMAIL');
+  const fromName = env('MAIL_FROM_NAME') || 'BHL Task Management';
+  const brevo = env('BREVO_API_KEY');
+  const resend = env('RESEND_API_KEY');
+  if (brevo && brevo.startsWith('xsmtpsib-'))
+    throw new Error('BREVO_API_KEY is an SMTP key (xsmtpsib-…). Use an API key (xkeysib-…) from Brevo → SMTP & API → API Keys.');
   if (!fromEmail || (!brevo && !resend)) throw new Error('Email provider is not configured (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM_EMAIL).');
 
   const res = brevo
