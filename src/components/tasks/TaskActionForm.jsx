@@ -3,6 +3,7 @@ import Button from '../ui/Button';
 import FormField from '../ui/FormField';
 import { FIELD_LIMITS } from '../../constants/task';
 import { useRefData } from '../../context/RefDataContext';
+import { useAuth } from '../../context/AuthContext';
 import { validateAction } from '../../utils/validation';
 import { fromLocalInput, toLocalInput } from '../../utils/format';
 
@@ -16,9 +17,15 @@ const TEXT_LABEL = {
 
 /** Inline form for a workflow action inside the task drawer. */
 export default function TaskActionForm({ action, task, onSubmit, onCancel }) {
-  const { experts, masterValues } = useRefData();
+  const { assignees, masterValues } = useRefData();
+  const { profile } = useAuth();
+  // Who can be picked: Take over → only me; Forward → anyone but me; Assign → anyone
+  const people = assignees.filter((u) =>
+    u.id !== task.assigned_to &&
+    (action.selfOnly ? u.id === profile.id : action.key === 'forward' ? u.id !== profile.id : true));
+  const initialTo = action.selfOnly ? profile.id : '';
   const [v, setV] = useState(() => ({
-    to: '',
+    to: initialTo,
     reason: '',
     text: '',
     summary: '',
@@ -70,13 +77,13 @@ export default function TaskActionForm({ action, task, onSubmit, onCancel }) {
       {(action.key === 'assign' || action.key === 'forward') && (
         <>
           <FormField label={action.key === 'forward' ? 'Forward to' : 'Assign to'} required>
-            <select value={v.to} onChange={set('to')} className="input">
-              <option value="">Select expert</option>
-              {experts
-                .filter((u) => u.id !== task.assigned_to)
-                .map((u) => (
-                  <option key={u.id} value={u.id}>{u.full_name}{u.designation ? ` — ${u.designation}` : ''}</option>
-                ))}
+            <select value={v.to} onChange={set('to')} className="input" disabled={action.selfOnly}>
+              {!action.selfOnly && <option value="">Select user</option>}
+              {people.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.id === profile.id ? `Me (${u.full_name})` : u.full_name}{u.designation ? ` — ${u.designation}` : ''}
+                </option>
+              ))}
             </select>
           </FormField>
           {textArea('reason', task.assigned_to ? 'Reason for the transfer' : 'Reason (optional)', Boolean(task.assigned_to))}

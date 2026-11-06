@@ -4,7 +4,7 @@ import { unwrap } from './errors';
 
 const ASSIGNEE = 'assignee:profiles!tasks_assigned_to_fkey(id, full_name, designation)';
 const LIST_COLUMNS = `id, task_no, title, task_type, priority, status, center, department, source, raised_by,
-  deadline, created_at, resolved_at, closed_at, assigned_to, ${ASSIGNEE}`;
+  deadline, created_at, resolved_at, closed_at, assigned_to, created_by, ${ASSIGNEE}`;
 
 /** Escape characters that have meaning inside PostgREST filters / LIKE. */
 function escapeSearch(term) {
@@ -14,13 +14,14 @@ function escapeSearch(term) {
     .trim();
 }
 
-function applyFilters(query, { search = '', status = '', priority = '', overdueOnly = false, assignedTo = null } = {}) {
+function applyFilters(query, { search = '', status = '', priority = '', overdueOnly = false, assignedTo = null, createdBy = null } = {}) {
   const term = escapeSearch(search);
   if (term) query = query.or(`task_no.ilike.%${term}%,title.ilike.%${term}%`);
   if (status) query = query.eq('status', status);
   if (priority) query = query.eq('priority', priority);
   if (overdueOnly) query = query.in('status', OPEN_STATUSES).lt('deadline', new Date().toISOString());
   if (assignedTo) query = query.eq('assigned_to', assignedTo);
+  if (createdBy) query = query.eq('created_by', createdBy);
   return query;
 }
 
@@ -75,7 +76,7 @@ const taskPayload = (v) => ({
   department: v.department,
   source: v.source,
   raised_by: v.raised_by?.trim(),
-  contact: v.contact?.trim(),
+  contact: v.contact?.trim() || null,
 });
 
 export async function createTask(v) {

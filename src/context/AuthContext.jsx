@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService';
 import { getMyProfile } from '../services/profileService';
-import { STAFF_ROLES } from '../constants/task';
 
 const AuthContext = createContext(null);
 
@@ -62,13 +61,20 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => {
     const role = profile?.role ?? null;
+    const permissions = profile?.permissions ?? [];
+    const can = (p) => permissions.includes(p);
     return {
       session,
       user: session?.user ?? null,
       profile,
       role,
-      isAdmin: role === 'Admin',
-      isStaff: STAFF_ROLES.includes(role),
+      permissions,
+      can,
+      isAdmin: can('menu.admin'),
+      canCreate: can('task.create'),
+      canAssign: can('task.assign'),
+      canManage: can('task.manage'),
+      canDelete: can('task.delete'),
       // Loading until we know the session and, if signed in, the profile (or an error)
       loading: session === undefined || (Boolean(uid) && profile?.id !== uid && !authError),
       authError,

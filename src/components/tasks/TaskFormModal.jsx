@@ -24,8 +24,10 @@ function Options({ values, current }) {
  */
 export default function TaskFormModal({ open, task, onClose, onSubmit }) {
   const isCreate = !task;
-  const { profile } = useAuth();
-  const { masterValues, experts } = useRefData();
+  const { profile, canAssign } = useAuth();
+  const { masterValues, assignees } = useRefData();
+  // With "Assign" permission: anyone; otherwise the creator can only take the task themselves
+  const assignOptions = canAssign ? assignees : assignees.filter((u) => u.id === profile?.id);
   const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -45,7 +47,7 @@ export default function TaskFormModal({ open, task, onClose, onSubmit }) {
             department: task.department,
             source: task.source,
             raised_by: task.raised_by,
-            contact: task.contact,
+            contact: task.contact ?? '',
           }
         : {
             title: '',
@@ -131,7 +133,7 @@ export default function TaskFormModal({ open, task, onClose, onSubmit }) {
           <FormField label="Raised by" required error={errors.raised_by}>
             <input type="text" value={values.raised_by ?? ''} onChange={set('raised_by')} maxLength={FIELD_LIMITS.raised_by.max} className="input" />
           </FormField>
-          <FormField label="Raised by contact number" required error={errors.contact}>
+          <FormField label="Raised by contact number" error={errors.contact} hint="Optional">
             <input type="tel" inputMode="tel" value={values.contact ?? ''} onChange={set('contact')} maxLength={20} className="input" placeholder="+880 17XX-XXXXXX" />
           </FormField>
 
@@ -140,8 +142,10 @@ export default function TaskFormModal({ open, task, onClose, onSubmit }) {
               <FormField label="Assign to" error={errors.assigned_to}>
                 <select value={values.assigned_to ?? ''} onChange={set('assigned_to')} className="input">
                   <option value="">Leave unassigned</option>
-                  {experts.map((u) => (
-                    <option key={u.id} value={u.id}>{u.full_name}{u.designation ? ` — ${u.designation}` : ''}</option>
+                  {assignOptions.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.id === profile?.id ? `Me (${u.full_name})` : u.full_name}{u.designation ? ` — ${u.designation}` : ''}
+                    </option>
                   ))}
                 </select>
               </FormField>

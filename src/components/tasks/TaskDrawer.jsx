@@ -8,14 +8,14 @@ import { PageLoader } from '../ui/Spinner';
 import { EditIcon, TrashIcon } from '../ui/Icons';
 import TaskActionForm from './TaskActionForm';
 import TaskFormModal from './TaskFormModal';
-import { ACTION_SUCCESS, availableActions } from './taskActions';
+import { ACTION_SUCCESS, availableActions, taskRights } from './taskActions';
 import * as taskService from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
 import { useRefData } from '../../context/RefDataContext';
 import { useTaskUI } from '../../context/TaskUIContext';
 import { useToast } from '../../context/ToastContext';
 import { formatDateTime } from '../../utils/format';
-import { isOpen, isOverdue, slaState, taskAge } from '../../utils/sla';
+import { isOverdue, slaState, taskAge } from '../../utils/sla';
 
 function Fact({ label, children }) {
   return (
@@ -37,7 +37,8 @@ function Section({ title, children }) {
 
 export default function TaskDrawer() {
   const { openTaskId, closeTask, version, notifyChanged } = useTaskUI();
-  const { profile, isStaff, isAdmin } = useAuth();
+  const auth = useAuth();
+  const { profile } = auth;
   const { nameOf, describe, sla } = useRefData();
   const toast = useToast();
 
@@ -84,7 +85,9 @@ export default function TaskDrawer() {
   }, [version]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function run(key, payload) {
-    await taskService.runTaskAction(task.id, key, payload);
+    // "Assign to me" is the assign action with myself as the target
+    if (key === 'take') await taskService.runTaskAction(task.id, 'assign', { to: profile.id });
+    else await taskService.runTaskAction(task.id, key, payload);
     toast.success(ACTION_SUCCESS[key] ?? 'Task updated.');
     setForm(null);
     notifyChanged();
@@ -122,7 +125,8 @@ export default function TaskDrawer() {
 
   const s = task && slaState(task, sla);
   const pending = task?.extensions.find((e) => e.state === 'Pending');
-  const actions = task ? availableActions(task, profile) : [];
+  const actions = task ? availableActions(task, auth) : [];
+  const rights = task ? taskRights(task, auth) : null;
 
   return (
     <Drawer open={open} onClose={closeTask} title={task?.task_no ?? 'Loading…'} subtitle={task ? `Created ${formatDateTime(task.created_at)} by ${nameOf(task.created_by)}` : ''}>
@@ -144,7 +148,9 @@ export default function TaskDrawer() {
             <Fact label="Department">{task.department}</Fact>
             <Fact label="Source">{task.source}</Fact>
             <Fact label="Raised by">{task.raised_by}</Fact>
-            <Fact label="Contact"><a href={`tel:${task.contact}`} className="text-brand-600 hover:underline">{task.contact}</a></Fact>
+            <Fact label="Contact">
+              {task.contact ? <a href={`tel:${task.contact}`} className="text-brand-600 hover:underline">{task.contact}</a> : '—'}
+            </Fact>
             <Fact label="Assigned to">{describe(task.assigned_to)}</Fact>
             <Fact label="Deadline">
               <span className={isOverdue(task) ? 'font-medium text-red-600' : ''}>{formatDateTime(task.deadline)}</span>
@@ -179,7 +185,7 @@ export default function TaskDrawer() {
                 <b className="font-medium">{formatDateTime(pending.requested_deadline)}</b>
               </p>
               <p className="mt-1 text-slate-700">{pending.reason}</p>
-              {isStaff && (
+              {rights.canDecideExtension(pending) && (
                 <div className="mt-3 flex gap-2">
                   <Button size="sm" loading={busyKey === 'approve_extension'} onClick={() => quickAction('approve_extension')}>Approve</Button>
                   <Button size="sm" variant="secondary" className="text-red-600" loading={busyKey === 'reject_extension'} onClick={() => quickAction('reject_extension')}>Reject</Button>
@@ -188,7 +194,7 @@ export default function TaskDrawer() {
             </div>
           )}
 
-          {(actions.length > 0 || isStaff) && (
+          {(actions.length > 0 || rights.canEdit || rights.canDelete) && (
             <div className="mt-5 flex flex-wrap gap-2">
               {actions.map((a) => (
                 <Button
@@ -202,10 +208,10 @@ export default function TaskDrawer() {
                   {a.label}
                 </Button>
               ))}
-              {isStaff && isOpen(task) && (
+              {rights.canEdit && (
                 <Button size="sm" variant="ghost" onClick={() => setEditing(true)}><EditIcon className="h-4 w-4" /> Edit details</Button>
               )}
-              {isAdmin && (
+              {rights.canDelete && (
                 <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setConfirmDelete(true)}><TrashIcon className="h-4 w-4" /> Delete</Button>
               )}
             </div>

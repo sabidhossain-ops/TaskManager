@@ -5,39 +5,48 @@ It is built with **React + Vite + Tailwind CSS** on **Supabase** (PostgreSQL, Au
 
 ## Features
 
-**Roles.** Each role sees its own menu.
+**Sign-in and accounts**
+- People sign in with a **username** (any text, 3–50 characters, without "@"). Older accounts can still use their email.
+- Each user has a full name, an optional email, an optional **employee PIN** and a designation.
+- **Forgot password:** enter your username, and a reset link is emailed to the address on your profile.
+- **Change password:** under your name (top right), and it asks for your current password first.
 
-| Role | Menu | Can do |
-| --- | --- | --- |
-| Admin | Dashboard, All tasks, My tasks, Audit log, Users & masters | Everything a Supervisor can, plus manage users, master lists and deletions |
-| Supervisor | Dashboard, Team tasks, My tasks, Audit log | Create, assign, reassign, edit, close and cancel tasks; approve or reject extensions; add remarks |
-| Expert | My tasks, My dashboard | Work on tasks assigned to them: acknowledge, start, hold, resolve, forward, request an extension, add remarks |
-| Management | Dashboard, All tasks, Audit log | Read only |
+**Permissions.** Admins choose, for each user, which menus and actions they get. The role (Admin, Supervisor, Expert, Management) only sets the default ticks.
+
+| Permission | Gives |
+| --- | --- |
+| Dashboard, All tasks, My tasks, Audit log, Users & masters | The menu item. "All tasks" also lets the person *see* every task |
+| Create tasks | Create tasks. Without "Assign", they can only leave a task unassigned or assign it to themselves |
+| Assign / reassign | Assign any task to anyone |
+| Manage any task | Edit, close, cancel, add remarks and approve extensions on every task |
+| Delete tasks | Permanently delete tasks |
+
+Default ticks per role:
+- **Admin:** everything.
+- **Supervisor:** everything except Users & masters and Delete.
+- **Expert:** My tasks and Dashboard.
+- **Management:** Dashboard, All tasks and Audit log.
+
+**The task creator** can always assign their own task to themselves and work on it. They can also edit, close or cancel it, and decide on extension requests for it.
 
 **Tasks**
 - Each task gets an ID like `BHL-TASK-2026-000001`, and its fields are:
   - title, details, type and priority
   - center, department and source
-  - who raised it and their contact number
-  - assignee and deadline
-- **Statuses:** New → Assigned → Acknowledged → In Progress ⇄ On Hold → Resolved → Closed. A task can also be Cancelled.
-- **SLA per priority:** Critical 4 h, High 8 h, Medium 2 days, Low 5 days. Each task shows Within SLA, At Risk, SLA Met or SLA Breached, plus overdue and aging.
-- **Resolution:** a summary, root cause, action taken and preventive action.
-- **Deadline extensions:** the expert requests one, and a supervisor approves or rejects it. The original deadline is kept.
-- **History for each task:** timeline (audit), worklog, assignment history and deadline history.
+  - who raised it, and an optional contact number
+  - assignee (any active user) and deadline
+- **Statuses:** New → Assigned → Acknowledged → In Progress ⇄ On Hold → Resolved → Closed, or Cancelled.
+- **SLA per priority:** Critical 4 h, High 8 h, Medium 2 days, Low 5 days. Each task shows its SLA state, overdue status and aging.
+- **History for each task:** resolution details, extension requests and approvals, timeline, worklog, assignment history and deadline history.
+- **Assignment emails:** whenever a task is assigned to someone else, they get an email with the task details and a link. Every email is recorded in **Users & masters → Email log**.
 
 **Screens**
-- **Dashboard:** 12 KPIs, plus bars by status, by priority, by age of open tasks, and open tasks per expert.
-- **Task list:**
-  - search by task ID or title
-  - filter by status, priority or overdue only
-  - pagination, with critical rows highlighted
-  - CSV export
-- **Audit log:** the latest 200 changes.
-- **Users & masters:**
-  - create users, set passwords, change role or designation, activate or deactivate
-  - edit the master lists: designations, task types, centers, sources, departments and root causes
-- **Live updates:** lists and the dashboard refresh when anyone changes a task (Supabase Realtime).
+- **Dashboard:** 12 KPIs, plus bars by status, by priority, by age of open tasks, and open tasks per assignee.
+- **All tasks / My tasks:** search, filters, an overdue-only filter and CSV export. My tasks switches between "Assigned to me" and "Created by me".
+- **Audit log, plus Users & masters:**
+  - users and their permissions
+  - the email log
+  - the master lists
 
 ## Architecture
 
@@ -87,18 +96,34 @@ Supabase
    - It seeds the master lists and SLA policies.
    - Users who already exist get a profile, and the oldest becomes **Admin**.
 
-### Edge Function (create users, set passwords)
-1. Go to **Supabase Dashboard → Edge Functions → Deploy a new function → Via Editor**.
-2. Name it **`admin-users`**.
-3. Paste in [`supabase/functions/admin-users/index.ts`](supabase/functions/admin-users/index.ts) and click **Deploy**.
+### Edge Functions
+There are two functions in `supabase/functions/`. Deploy each one under **Edge Functions → Deploy a new function → Via Editor**:
 
-Or deploy it with the CLI: `npx supabase functions deploy admin-users --project-ref <ref>`.
+| Function | Purpose | Verify JWT |
+| --- | --- | --- |
+| `admin-users` | Create users, set passwords, change usernames (Users & masters only) | on or off; it checks the caller itself |
+| `notify` | Assignment emails and password-reset emails | **off**, because the database calls it without a user token |
 
-Notes:
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided to the function automatically.
-- If calls fail with "Invalid JWT", turn off **Enforce JWT verification** in the function's settings. The function checks the caller's token and Admin role itself.
+**Point the database at your functions** (once, in the SQL Editor):
+```sql
+update app_private.settings set value = 'https://<project-ref>.supabase.co/functions/v1' where key = 'functions_url';
+```
 
-Without the function, everything else works. You can then create users under **Authentication → Users → Add user** (tick **Auto Confirm User**) and set their role on the **Users & masters** page.
+### Email sending (assignment emails and password reset)
+Supabase Edge Functions can't use SMTP ports, so emails go through an email API.
+1. Create a free account with an email API provider:
+   - **[Brevo](https://www.brevo.com):** 300 emails a day. You can verify a single sender address without changing any DNS.
+   - **[Resend](https://resend.com):** needs a verified domain.
+2. In Supabase, go to **Edge Functions → Secrets** and add:
+   - `BREVO_API_KEY`, or `RESEND_API_KEY`
+   - `MAIL_FROM_EMAIL`: the verified sender address
+   - `MAIL_FROM_NAME`: optional, defaults to "BHL Task Management"
+   - `APP_URL`: the app's public address, for example `https://taskmanager.<you>.workers.dev`. It's used in email links.
+3. Turn off **Allow new users to sign up** under **Authentication → Sign In / Providers**. Accounts are created only by admins.
+
+Until this is set up, the app still works, but assignment emails show as **failed** in the email log, with the reason.
+
+**How usernames work.** Supabase Auth requires an email, so each username gets an internal sign-in address: `u-<hash>@bhl-tasks.invalid`. It is never mailed. A user's real email, if they have one, is stored separately and used only for notifications.
 
 ## 2. Run locally
 

@@ -43,3 +43,5 @@ export const AdminIcon = make(<><circle cx="12" cy="8" r="4" /><path d="M4 21c0-
 export const DownloadIcon = make(<><path d="M12 4v11M7 10l5 5 5-5" /><path d="M4 20h16" /></>);
 export const FlagIcon = make(<><path d="M5 21V4" /><path d="M5 4h12l-2 4 2 4H5" /></>);
 export const InboxIcon =make(<><path d="M3 13l3-8h12l3 8v6H3v-6z" /><path d="M3 13h5l1 3h6l1-3h5" /></>);
+export const KeyIcon = make(<><circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M17 6l3 3M14 9l2 2" /></>);
+export const MailIcon = make(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>);

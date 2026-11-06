@@ -32,7 +32,7 @@ function Panel({ title, children }) {
 }
 
 export default function DashboardPage() {
-  const { role } = useAuth();
+  const { can } = useAuth();
   const { version } = useTaskUI();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +89,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-500">
-          {role === 'Expert' ? 'Figures for tasks assigned to you.' : 'Live figures across all tasks.'}
+          {can('menu.all_tasks') ? 'Live figures across all tasks.' : 'Figures for tasks assigned to or created by you.'}
         </p>
         <Button variant="secondary" size="sm" onClick={load} aria-label="Refresh dashboard">
           <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
@@ -110,8 +110,8 @@ export default function DashboardPage() {
         <Panel title="Open task aging">
           <BarList loading={busy} barClass="bg-amber-500" items={Object.entries(stats?.aging ?? {}).map(([label, value]) => ({ label, value }))} />
         </Panel>
-        <Panel title="Open tasks by expert">
-          <BarList loading={busy} barClass="bg-teal-600" empty="No active experts yet." items={(stats?.open_by_expert ?? []).map((e) => ({ label: e.name, value: e.open }))} />
+        <Panel title="Open tasks by assignee">
+          <BarList loading={busy} barClass="bg-teal-600" empty="No open assigned tasks." items={(stats?.open_by_assignee ?? []).map((e) => ({ label: e.name, value: e.open }))} />
         </Panel>
       </div>
     </div>

@@ -6,6 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleRoute, { HomeRedirect } from './components/auth/RoleRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import AuditPage from './pages/AuditPage';
@@ -22,6 +23,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<HomeRedirect />} />
@@ -30,6 +32,7 @@ export default function App() {
                 <Route path="/my-tasks" element={<RoleRoute page="myTasks"><TasksPage key="mine" scope="mine" /></RoleRoute>} />
                 <Route path="/audit" element={<RoleRoute page="audit"><AuditPage /></RoleRoute>} />
                 <Route path="/admin" element={<RoleRoute page="admin"><AdminPage /></RoleRoute>} />
+                <Route path="/no-access" element={null} />
               </Route>
             </Route>
             <Route path="*" element={<NotFoundPage />} />

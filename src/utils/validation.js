@@ -15,7 +15,7 @@ export function validateTaskForm(v, { isCreate }) {
     if (!v[k]) errors[k] = `Choose a ${label}.`;
   if (!PRIORITIES.includes(v.priority)) errors.priority = 'Choose a priority.';
   if (!trim(v.raised_by)) errors.raised_by = 'Enter who raised the task.';
-  if (!CONTACT_RE.test(trim(v.contact))) errors.contact = 'Enter a valid contact number (digits, +, -, spaces).';
+  if (trim(v.contact) && !CONTACT_RE.test(trim(v.contact))) errors.contact = 'Enter a valid contact number (digits, +, -, spaces), or leave it empty.';
   if (isCreate) {
     const dl = v.deadline ? new Date(v.deadline).getTime() : NaN;
     if (!dl || dl <= Date.now()) errors.deadline = 'Deadline must be in the future.';
@@ -29,7 +29,7 @@ export function validateAction(action, v, task) {
   switch (action) {
     case 'assign':
     case 'forward':
-      if (!v.to) return 'Select an expert.';
+      if (!v.to) return 'Select a user.';
       if (task.assigned_to && !has('reason')) return 'Enter the reason for the transfer.';
       return '';
     case 'hold':
@@ -50,19 +50,37 @@ export function validateAction(action, v, task) {
   }
 }
 
-export function validateNewUser(v) {
+export const PIN_RE = /^[A-Za-z0-9-]{1,20}$/;
+
+/** Username: any text 3–50 characters, but not an email address. */
+export function usernameError(u) {
+  const t = trim(u);
+  if (t.length < 3 || t.length > 50) return 'Username must be 3–50 characters.';
+  if (t.includes('@')) return 'Username cannot contain "@" — it is not an email address.';
+  return '';
+}
+
+export function validateUserFields(v, { isCreate }) {
   const errors = {};
+  const uErr = usernameError(v.username);
+  if (uErr) errors.username = uErr;
   if (!trim(v.full_name)) errors.full_name = 'Enter the full name.';
-  if (!EMAIL_RE.test(trim(v.email))) errors.email = 'Enter a valid email address.';
-  if ((v.password ?? '').length < 8) errors.password = 'Password must be at least 8 characters.';
+  if (trim(v.email) && !EMAIL_RE.test(trim(v.email))) errors.email = 'Enter a valid email address, or leave it empty.';
+  if (trim(v.employee_pin) && !PIN_RE.test(trim(v.employee_pin))) errors.employee_pin = 'Letters, digits and - only (max 20).';
+  if (isCreate && (v.password ?? '').length < 8) errors.password = 'Password must be at least 8 characters.';
   if (!ROLES.includes(v.role)) errors.role = 'Choose a role.';
   return errors;
 }
 
-export function validateLogin({ email, password }) {
+export function validateNewPassword(password, confirm) {
+  if ((password ?? '').length < 8) return 'New password must be at least 8 characters.';
+  if (password !== confirm) return 'The two passwords do not match.';
+  return '';
+}
+
+export function validateLogin({ username, password }) {
   const errors = {};
-  if (!email?.trim()) errors.email = 'Email is required.';
-  else if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address.';
+  if (!username?.trim()) errors.username = 'Username is required.';
   if (!password) errors.password = 'Password is required.';
   return errors;
 }

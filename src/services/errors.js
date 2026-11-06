@@ -11,7 +11,7 @@ export function toFriendlyError(error, fallback = 'Something went wrong. Please 
   if (code === 'P0001') return error.message;
   if (msg.includes('failed to fetch') || msg.includes('networkerror'))
     return 'Cannot reach the server. Check your internet connection.';
-  if (msg.includes('invalid login credentials')) return 'Incorrect email or password.';
+  if (msg.includes('invalid login credentials')) return 'Incorrect username or password.';
   if (msg.includes('email not confirmed')) return 'Please confirm your email address first.';
   if (code === 'PGRST202' || code === '42883' || code === '42P01' || code === 'PGRST205')
     return 'The database is not set up yet. Run supabase/schema.sql in the Supabase SQL Editor.';

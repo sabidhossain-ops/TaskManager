@@ -34,7 +34,8 @@ export function RefDataProvider({ children }) {
         if (!p) return id ? 'Unknown user' : 'Unassigned';
         return p.designation ? `${p.full_name} (${p.designation})` : p.full_name;
       },
-      experts: state.profiles.filter((p) => p.role === 'Expert' && p.active),
+      // Anyone active can be assigned a task
+      assignees: state.profiles.filter((p) => p.active),
       masterValues: (kind) => (state.masters[kind] ?? []).map((m) => m.value),
     };
   }, [state, reload]);

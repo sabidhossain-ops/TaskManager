@@ -35,11 +35,11 @@ function CreateTaskModal() {
 }
 
 function Shell() {
-  const { role } = useAuth();
+  const { permissions } = useAuth();
   const { loaded, error, reload } = useRefData();
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
-  const items = navFor(role);
+  const items = navFor(permissions);
   const title = items.find((i) => i.path === pathname)?.label ?? 'Task Management';
 
   return (
@@ -53,6 +53,10 @@ function Shell() {
           ) : error ? (
             <div className="card">
               <EmptyState icon={AlertIcon} title="Could not load reference data" message={error} action={<Button variant="secondary" onClick={reload}>Try again</Button>} />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="card">
+              <EmptyState title="No menus assigned" message="Your account has no menu permissions yet. Ask an administrator to grant access." />
             </div>
           ) : (
             <Outlet />
